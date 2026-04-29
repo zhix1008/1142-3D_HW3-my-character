@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Hub - WebXR Portal</title>
+    <style>
+        :root {
+            --primary: #0ff;
+            --secondary: #f0f;
+            --bg-color: #050505;
+            --glass-bg: rgba(10, 20, 30, 0.4);
+            --glass-border: rgba(0, 255, 255, 0.2);
+            --font-main: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: #fff;
+            font-family: var(--font-main);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Particle Background Canvas */
+        #particle-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* Scanline Overlay */
+        .scanlines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Main Container */
+        .hub-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 90%;
+            max-width: 1200px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            animation: textGlow 2s ease-in-out infinite alternate;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary);
+        }
+
+        .header p {
+            font-size: 1rem;
+            color: var(--secondary);
+            margin-top: 10px;
+        }
+
+        @keyframes textGlow {
+            from { text-shadow: 0 0 10px var(--primary), 0 0 20px var(--primary); }
+            to { text-shadow: 0 0 20px var(--primary), 0 0 40px var(--primary), 0 0 60px var(--primary); }
+        }
+
+        /* Grid Layout for Links */
+        .grid-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            width: 100%;
+            perspective: 1000px;
+        }
+
+        /* Glassmorphism Cards */
+        .portal-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 30px;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .portal-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.6s;
+            z-index: 1;
+        }
+
+        .portal-card:hover::before {
+            left: 100%;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-10px) scale(1.05) rotateX(10deg) rotateY(-10deg);
+            border-color: var(--primary);
+            box-shadow: 0 15px 40px rgba(0, 255, 255, 0.3), inset 0 0 20px rgba(0, 255, 255, 0.1);
+        }
+
+        .card-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--secondary);
+            z-index: 2;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            z-index: 2;
+            text-transform: uppercase;
+        }
+
+        .card-desc {
+            font-size: 0.8rem;
+            color: #aaa;
+            margin-top: 10px;
+            text-align: center;
+            z-index: 2;
+        }
+
+        /* Decorative Corners */
+        .corner {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border: 2px solid var(--primary);
+            z-index: 3;
+            transition: 0.3s;
+        }
+        .corner-tl { top: 10px; left: 10px; border-right: none; border-bottom: none; }
+        .corner-tr { top: 10px; right: 10px; border-left: none; border-bottom: none; }
+        .corner-bl { bottom: 10px; left: 10px; border-right: none; border-top: none; }
+        .corner-br { bottom: 10px; right: 10px; border-left: none; border-top: none; }
+
+        .portal-card:hover .corner {
+            width: 25px;
+            height: 25px;
+            border-color: var(--secondary);
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id="particle-canvas"></canvas>
+    <div class="scanlines"></div>
+
+    <div class="hub-container">
+        <div class="header">
+            <h1>System Nexus</h1>
+            <p>Welcome to the Interactive 3D Model Environment</p>
+        </div>
+
+        <div class="grid-menu">
+            <a href="0.babylonViewer Basic.html" class="portal-card">
+                <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+                <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+                <div class="card-icon">👁️</div>
+                <div class="card-title">Babylon Basic</div>
+                <div class="card-desc">Initialize standard viewing protocols. Full-screen core rendering.</div>
+            </a>
+
+            <a href="1.babylonViewer Select.html" class="portal-card">
+                <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+                <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+                <div class="card-icon">🗃️</div>
+                <div class="card-title">Model Select</div>
+                <div class="card-desc">Access the database dropdown. Switch between loaded asset streams.</div>
+            </a>
+
+            <a href="2.babylonViewer Navbar.html" class="portal-card">
+                <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+                <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+                <div class="card-icon">🕶️</div>
+                <div class="card-title">VR Navbar</div>
+                <div class="card-desc">Engage navigation UI. Virtual Reality hooks enabled.</div>
+            </a>
+
+            <a href="sketchfab.html" class="portal-card">
+                <div class="corner corner-tl"></div><div class="corner corner-tr"></div>
+                <div class="corner corner-bl"></div><div class="corner corner-br"></div>
+                <div class="card-icon">🌐</div>
+                <div class="card-title">SketchFab Link</div>
+                <div class="card-desc">Connect to external Sketchfab embedding framework.</div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // --- High-Performance Particle Engine ---
+        const canvas = document.getElementById('particle-canvas');
+        const ctx = canvas.getContext('2d');
+        let particlesArray = [];
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            initParticles();
+        });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.speedY = Math.random() * 1 - 0.5;
+                this.color = Math.random() > 0.5 ? '#0ff' : '#f0f';
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x > canvas.width) this.x = 0;
+                else if (this.x < 0) this.x = canvas.width;
+                if (this.y > canvas.height) this.y = 0;
+                else if (this.y < 0) this.y = canvas.height;
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function initParticles() {
+            particlesArray = [];
+            const numberOfParticles = (canvas.width * canvas.height) / 8000;
+            for (let i = 0; i < numberOfParticles; i++) {
+                particlesArray.push(new Particle());
+            }
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = 0; i < particlesArray.length; i++) {
+                particlesArray[i].update();
+                particlesArray[i].draw();
+                // Draw connecting lines
+                for (let j = i; j < particlesArray.length; j++) {
+                    const dx = particlesArray[i].x - particlesArray[j].x;
+                    const dy = particlesArray[i].y - particlesArray[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    if (distance < 100) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(0, 255, 255, ${0.2 - distance/500})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particlesArray[i].x, particlesArray[i].y);
+                        ctx.lineTo(particlesArray[j].x, particlesArray[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        }
+
+        initParticles();
+        animateParticles();
+    </script>
+</body>
+</html>

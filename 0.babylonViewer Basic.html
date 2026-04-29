@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Holo-Chamber: Basic Viewer</title>
+    <script src="https://cdn.babylonjs.com/viewer/babylon.viewer.js"></script>
+    <style>
+        :root {
+            --glow: #00ffff;
+            --bg-color: #030305;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            overflow: hidden;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        /* The Frame Container */
+        .holo-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Babylon Viewer Override */
+        babylon {
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+        }
+
+        /* Sci-Fi HUD Overlay */
+        .hud-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+            box-shadow: inset 0 0 150px rgba(0, 255, 255, 0.1);
+        }
+
+        /* Animated Scanline */
+        .hud-overlay::before {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 11;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        .scanning-beam {
+            position: absolute;
+            top: -10%;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: linear-gradient(to bottom, transparent, var(--glow), transparent);
+            opacity: 0.3;
+            animation: scan 4s linear infinite;
+            z-index: 12;
+        }
+
+        @keyframes scan {
+            0% { top: -10%; }
+            100% { top: 110%; }
+        }
+
+        /* HUD Text Elements */
+        .telemetry {
+            position: absolute;
+            color: var(--glow);
+            font-size: 12px;
+            text-shadow: 0 0 5px var(--glow);
+            z-index: 15;
+            letter-spacing: 1px;
+        }
+
+        .top-left { top: 20px; left: 20px; }
+        .top-right { top: 20px; right: 20px; text-align: right; }
+        .bottom-left { bottom: 20px; left: 20px; }
+        .bottom-right { bottom: 20px; right: 20px; text-align: right; }
+
+        /* Crosshairs */
+        .crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 50%;
+            z-index: 10;
+        }
+        .crosshair::before, .crosshair::after {
+            content: '';
+            position: absolute;
+            background: rgba(0, 255, 255, 0.5);
+        }
+        .crosshair::before { top: 50%; left: -10px; right: -10px; height: 1px; transform: translateY(-50%); }
+        .crosshair::after { left: 50%; top: -10px; bottom: -10px; width: 1px; transform: translateX(-50%); }
+        
+        .back-btn {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--glow);
+            color: var(--glow);
+            padding: 5px 15px;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-size: 10px;
+            pointer-events: auto;
+            transition: 0.3s;
+        }
+        .back-btn:hover {
+            background: var(--glow);
+            color: #000;
+            box-shadow: 0 0 15px var(--glow);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="holo-container">
+        <babylon model="./models/statue.glb"></babylon>
+        
+        <div class="hud-overlay">
+            <div class="scanning-beam"></div>
+            <div class="crosshair"></div>
+            <a href="index.html" class="back-btn">Disconnect & Return</a>
+            
+            <div class="telemetry top-left">
+                SYS.INIT: OK<br>
+                RENDER_ENGINE: BABYLON.JS<br>
+                MODEL_statue: statue.GLB [LOADED]
+            </div>
+            
+            <div class="telemetry top-right">
+                <span id="time-display">00:00:00</span><br>
+                LATENCY: 12ms<br>
+                FPS: <span id="fps-sim">60</span>
+            </div>
+
+            <div class="telemetry bottom-left">
+                X: 23.44 Y: 45.11 Z: -12.0<br>
+                CAM_FOV: 45 DEG
+            </div>
+
+            <div class="telemetry bottom-right">
+                <div style="width: 100px; height: 5px; border: 1px solid var(--glow); margin-top: 5px;">
+                    <div style="width: 85%; height: 100%; background: var(--glow); box-shadow: 0 0 5px var(--glow);"></div>
+                </div>
+                MEMORY: 85%
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate HUD dynamic data
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('time-display').innerText = now.toLocaleTimeString();
+            document.getElementById('fps-sim').innerText = Math.floor(Math.random() * (62 - 58 + 1)) + 58;
+        }, 1000);
+    </script>
+</body>
+</html>

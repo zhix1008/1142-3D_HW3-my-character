@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Asset Database - Viewer</title>
+    <script src="https://cdn.babylonjs.com/viewer/babylon.viewer.js"></script>
+    <style>
+        :root {
+            --theme: #ff00ff; /* Magenta Sci-Fi theme */
+            --bg-dark: #0a0a0a;
+            --panel-bg: rgba(20, 0, 20, 0.7);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: #fff;
+            font-family: 'Consolas', monospace;
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+            background-image: radial-gradient(circle at center, #1a001a 0%, #000 100%);
+        }
+
+        /* Layout Grid */
+        .terminal-wrapper {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            padding: 20px;
+            gap: 20px;
+            box-sizing: border-box;
+        }
+
+        /* Sidebar Control Panel */
+        .control-panel {
+            flex: 0 0 300px;
+            background: var(--panel-bg);
+            border: 2px solid var(--theme);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        .control-panel::before {
+            content: 'DATABASE_UPLINK';
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--bg-dark);
+            padding: 0 10px;
+            color: var(--theme);
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 2px;
+        }
+
+        .data-header {
+            text-align: center;
+            border-bottom: 1px dashed var(--theme);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .data-header h2 {
+            margin: 0;
+            font-size: 20px;
+            color: var(--theme);
+            text-shadow: 0 0 8px var(--theme);
+        }
+
+        /* Custom Select Styling */
+        .select-wrapper {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .select-wrapper label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-size: 12px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--theme);
+            color: var(--theme);
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            cursor: pointer;
+            appearance: none;
+            box-shadow: inset 0 0 10px rgba(255, 0, 255, 0.1);
+            transition: 0.3s;
+        }
+
+        select:hover, select:focus {
+            box-shadow: inset 0 0 20px rgba(255, 0, 255, 0.3), 0 0 10px rgba(255, 0, 255, 0.2);
+        }
+
+        select option {
+            background: #111;
+            color: var(--theme);
+        }
+
+        /* Custom Dropdown Arrow */
+        .select-wrapper::after {
+            content: '▼';
+            position: absolute;
+            right: 15px;
+            top: 35px;
+            color: var(--theme);
+            pointer-events: none;
+            font-size: 12px;
+        }
+
+        /* Fake Progress Bar */
+        .statue-box {
+            margin-top: auto;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            margin-top: 10px;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--theme);
+            box-shadow: 0 0 10px var(--theme);
+            transition: width 0.5s ease;
+        }
+
+        .log-output {
+            margin-top: 10px;
+            height: 100px;
+            overflow: hidden;
+            font-size: 10px;
+            color: #0f0; /* Matrix green for logs */
+            line-height: 1.4;
+        }
+
+        /* Main Viewer Area */
+        .viewer-area {
+            flex: 1;
+            position: relative;
+            border: 2px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .viewerContainer {
+            width: 100%;
+            height: 100%;
+            /* image-rendering: pixelated; keeping original requirement */
+            image-rendering: pixelated; 
+        }
+
+        babylon {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Decorative brackets for viewer */
+        .bracket {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--theme);
+            z-index: 10;
+            pointer-events: none;
+        }
+        .b-tl { top: 20px; left: 20px; border-right: none; border-bottom: none; }
+        .b-tr { top: 20px; right: 20px; border-left: none; border-bottom: none; }
+        .b-bl { bottom: 20px; left: 20px; border-right: none; border-top: none; }
+        .b-br { bottom: 20px; right: 20px; border-left: none; border-top: none; }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 15px;
+            color: var(--theme);
+            text-decoration: none;
+            font-size: 14px;
+            border: 1px solid var(--theme);
+            padding: 5px 10px;
+            transition: 0.3s;
+            text-align: center;
+        }
+        .back-link:hover {
+            background: var(--theme);
+            color: #000;
+        }
+
+    </style>
+    <script>
+        const logs = [
+            "Establishing connection to asset server...",
+            "Decrypting geometry data...",
+            "Compiling shader materials...",
+            "Mapping textures...",
+            "Asset initialization complete."
+        ];
+
+        function simulateLoading() {
+            const bar = document.getElementById('loading-bar');
+            const logBox = document.getElementById('log-box');
+            bar.style.width = '0%';
+            logBox.innerHTML = '';
+            
+            let progress = 0;
+            let logIndex = 0;
+
+            const interval = setInterval(() => {
+                progress += Math.random() * 20;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                }
+                bar.style.width = `${progress}%`;
+
+                if (progress > (logIndex * 20) && logIndex < logs.length) {
+                    logBox.innerHTML += `> ${logs[logIndex]}<br>`;
+                    logIndex++;
+                }
+            }, 150);
+        }
+
+        function loadit(modelUrl) {
+            if(modelUrl) {
+                simulateLoading();
+                let viewer = BabylonViewer.viewerManager.getViewerById('viewerID');
+                // Added brief timeout to simulate data stream before loading
+                setTimeout(() => {
+                    viewer.loadModel(modelUrl);
+                }, 800);
+            }
+        }
+        
+        // Initialize first fake load
+        window.onload = simulateLoading;
+    </script>
+</head>
+<body>
+    <div class="terminal-wrapper">
+        <div class="control-panel">
+            <div class="data-header">
+                <h2>ASSET TERMINAL</h2>
+                <span style="font-size: 10px; color: #888;">SECURE CONNECTION: ENCRYPTED</span>
+            </div>
+
+            <div class="select-wrapper">
+                <label>TARGET ASSET STREAM</label>
+                <select onchange="loadit(this.value)">
+                    <option value="" disabled selected>-- Select Asset --</option>
+                    <option value="./models/statue.glb">Entity_01 [statue]</option>
+                    <option value="./models/Astronaut.glb">Entity_02 [Astronaut]</option>
+                    <option value="./models/stacy_lightweight.glb">Entity_03 [Stacy]</option>
+                </select>
+            </div>
+
+            <div class="statue-box">
+                <div>SYSTEM LOGS</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="loading-bar"></div>
+                </div>
+                <div class="log-output" id="log-box">
+                    > System ready.<br>
+                    > Awaiting input...
+                </div>
+            </div>
+
+            <a href="index.html" class="back-link">Return to Nexus</a>
+        </div>
+
+        <div class="viewer-area">
+            <div class="bracket b-tl"></div>
+            <div class="bracket b-tr"></div>
+            <div class="bracket b-bl"></div>
+            <div class="bracket b-br"></div>
+            <div class='viewerContainer'>
+                <babylon id="viewerID"></babylon>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

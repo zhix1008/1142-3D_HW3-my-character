@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>VR Command Module</title>
+    <script src="https://cdn.babylonjs.com/viewer/babylon.viewer.js"></script>
+    <style>
+        :root {
+            --nav-color: #00ffaa; /* Cyber Mint */
+            --bg-grid: #05100c;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            background-color: var(--bg-grid);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            /* Cyber Grid Background */
+            background-image: 
+                linear-gradient(rgba(0, 255, 170, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 170, 0.1) 1px, transparent 1px);
+            background-size: 30px 30px;
+            background-position: center center;
+        }
+
+        /* Top Navigation Bar */
+        .cyber-navbar {
+            height: 70px;
+            background: rgba(0, 20, 10, 0.8);
+            border-bottom: 2px solid var(--nav-color);
+            box-shadow: 0 5px 20px rgba(0, 255, 170, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: 900;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .brand-icon {
+            width: 20px;
+            height: 20px;
+            background: var(--nav-color);
+            box-shadow: 0 0 10px var(--nav-color);
+            animation: pulseIcon 2s infinite;
+        }
+
+        @keyframes pulseIcon {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.2) rotate(45deg); opacity: 1; }
+            100% { transform: scale(1) rotate(90deg); opacity: 0.8; }
+        }
+
+        /* Main UI Container */
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 20px;
+        }
+
+        /* Custom Selector Top Center */
+        .hud-selector {
+            position: absolute;
+            top: 20px;
+            z-index: 50;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid var(--nav-color);
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            box-shadow: 0 0 15px rgba(0, 255, 170, 0.1);
+        }
+
+        .hud-selector select {
+            background: transparent;
+            border: none;
+            color: var(--nav-color);
+            font-size: 16px;
+            font-weight: bold;
+            outline: none;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .hud-selector select option {
+            background: #001a11;
+            color: var(--nav-color);
+        }
+
+        /* Viewer Container Enhancement */
+        .viewerContainer {
+            width: 80%;
+            max-width: 1000px;
+            height: 70vh;
+            border: 2px solid rgba(0, 255, 170, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+            background: #000;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            image-rendering: pixelated;
+        }
+
+        babylon {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Corner accents for viewer */
+        .viewerContainer::before, .viewerContainer::after {
+            content: '';
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--nav-color);
+            pointer-events: none;
+            z-index: 10;
+        }
+        .viewerContainer::before { top: 0; left: 0; border-right: none; border-bottom: none; border-radius: 10px 0 0 0; }
+        .viewerContainer::after { bottom: 0; right: 0; border-left: none; border-top: none; border-radius: 0 0 10px 0; }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            font-size: 12px;
+            letter-spacing: 1px;
+            padding: 8px 15px;
+            border: 1px solid transparent;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+        .nav-links a:hover {
+            border-color: var(--nav-color);
+            color: var(--nav-color);
+            background: rgba(0, 255, 170, 0.1);
+        }
+
+    </style>
+    <script>
+        function loadit(modelUrl) {
+            if(modelUrl) {
+                let viewer = BabylonViewer.viewerManager.getViewerById('viewerID');
+                let temp = viewer.templateManager.getTemplate('navBar');
+                let param = temp._configuration;
+                // Force VR settings as requested
+                param.params.hideVr = false;
+                param.params.disableOnFullscreen = true;
+                temp.updateParams(param);
+                viewer.loadModel(modelUrl);
+
+                // Add a cool visual flash effect when loading
+                const container = document.querySelector('.viewerContainer');
+                container.style.boxShadow = '0 0 50px #00ffaa, inset 0 0 30px #00ffaa';
+                setTimeout(() => {
+                    container.style.boxShadow = '0 20px 50px rgba(0,0,0,0.8)';
+                }, 500);
+            }
+        }
+    </script>
+</head>
+<body>
+
+    <nav class="cyber-navbar">
+        <div class="brand">
+            <div class="brand-icon"></div>
+            VR MODULE
+        </div>
+        <div class="nav-links">
+            <a href="index.html">Disconnect (Return Home)</a>
+        </div>
+    </nav>
+
+    <div class="content-area">
+        <div class="hud-selector">
+            <span style="color: white; font-size: 12px; letter-spacing: 1px;">TARGET:</span>
+            <select onchange="loadit(this.value)">
+                <option value="" selected disabled>SELECT ENTITY</option>
+                <option value="./models/statue.glb">statue</option>
+                <option value="./models/Astronaut.glb">Astronaut</option>
+                <option value="./models/handsome.glb">handsome</option>
+            </select>
+        </div>
+
+        <div class='viewerContainer'>
+            <babylon id="viewerID"><vr></vr></babylon>
+        </div>
+    </div>
+
+</body>
+</html>

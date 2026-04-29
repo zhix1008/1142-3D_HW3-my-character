@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SketchFab Data Link</title>
+    <style>
+        :root {
+            --orange: #ff6600;
+            --bg-color: #110d0a;
+            --ui-bg: rgba(25, 15, 5, 0.8);
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: #ddd;
+            font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            background-image: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(255, 102, 0, 0.03) 2px,
+                rgba(255, 102, 0, 0.03) 4px
+            );
+        }
+
+        /* Hexagon Background Effect */
+        .hex-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-size: 50px 86.60px;
+            background-image: 
+                linear-gradient(30deg, transparent 48%, rgba(255, 102, 0, 0.05) 50%, transparent 52%),
+                linear-gradient(150deg, transparent 48%, rgba(255, 102, 0, 0.05) 50%, transparent 52%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .dashboard {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 1400px;
+            height: 85vh;
+            background: var(--ui-bg);
+            border: 1px solid var(--orange);
+            border-radius: 5px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 30px rgba(255, 102, 0, 0.1);
+        }
+
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            background: linear-gradient(90deg, rgba(255,102,0,0.2) 0%, transparent 100%);
+            border-bottom: 1px solid var(--orange);
+            flex-wrap: wrap; /* 允許在螢幕太小時自動換行 */
+            gap: 15px; /* 元素之間的間距 */
+        }
+
+        .dash-title {
+            color: var(--orange);
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .blinker {
+            width: 12px;
+            height: 12px;
+            background-color: var(--orange);
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; box-shadow: 0 0 10px var(--orange); }
+            50% { opacity: 0.3; box-shadow: none; }
+        }
+
+        /* 修正後的按鈕區域 */
+        .actions {
+            display: flex;
+            gap: 15px; /* 取代原本的 margin-left，讓排版更整齊 */
+            align-items: center;
+        }
+
+        .actions a {
+            display: inline-block; /* 修正跑版關鍵 1：讓 a 標籤擁有區塊特性 */
+            white-space: nowrap;   /* 修正跑版關鍵 2：強制文字不准換行 */
+            color: white;
+            text-decoration: none;
+            padding: 8px 20px;
+            border: 1px solid var(--orange);
+            font-size: 14px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            background: rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .actions a:hover {
+            background: var(--orange);
+            color: black;
+            box-shadow: 0 0 15px var(--orange);
+        }
+
+        .iframe-container {
+            flex: 1;
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* High-tech framing around the iframe */
+        .sketchfab-embed-wrapper {
+            width: 80%;
+            height: 90%;
+            position: relative;
+            background: #000;
+            border: 2px solid rgba(255, 102, 0, 0.5);
+            padding: 5px;
+            box-sizing: border-box;
+        }
+
+        .sketchfab-embed-wrapper::before, .sketchfab-embed-wrapper::after {
+            content: '';
+            position: absolute;
+            width: 40px; height: 40px;
+            border: 3px solid var(--orange);
+            pointer-events: none;
+        }
+        .sketchfab-embed-wrapper::before { top: -10px; left: -10px; border-right: none; border-bottom: none; }
+        .sketchfab-embed-wrapper::after { bottom: -10px; right: -10px; border-left: none; border-top: none; }
+
+        iframe {
+            width: 100% !important;
+            height: 100% !important;
+            border: none;
+            display: block;
+        }
+
+        .statue-footer {
+            padding: 10px 30px;
+            border-top: 1px solid rgba(255,102,0,0.3);
+            font-size: 12px;
+            color: #888;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .statue-footer span {
+            color: var(--orange);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="hex-bg"></div>
+
+    <div class="dashboard">
+        <div class="dash-header">
+            <div class="dash-title">
+                <div class="blinker"></div>
+                EXTERNAL ASSET LINK
+            </div>
+            <div class="actions">
+                <a href="https://skfb.ly/pIWSY" target="_blank">Direct Source</a>
+                <a href="index.html">Abort Link (Home)</a>
+            </div>
+        </div>
+
+        <div class="iframe-container">
+            <div class="sketchfab-embed-wrapper">
+                <iframe 
+                    title="Military Radio" 
+                    frameborder="0" 
+                    allowfullscreen 
+                    mozallowfullscreen="true" 
+                    webkitallowfullscreen="true" 
+                    allow="autoplay; fullscreen; xr-spatial-tracking" 
+                    xr-spatial-tracking 
+                    execution-while-out-of-viewport 
+                    execution-while-not-rendered 
+                    web-share 
+                    src="https://sketchfab.com/models/a5fd1f01a7784303992351ec8a6d5664/embed">
+                </iframe>
+            </div>
+        </div>
+
+        <div class="statue-footer">
+            <div>HOST: <span>Sketchfab API</span></div>
+            <div>statue: <span>STREAMING ACTIVE</span></div>
+            <div>USER: <span>MEIMEI</span></div>
+        </div>
+    </div>
+</body>
+</html>
